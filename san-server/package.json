@@ -1,0 +1,16 @@
+{
+  "name": "san-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "nodemon --exec electron . --watch ./ --ext .js .html .css .vue"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "electron": "^39.2.7"
+  }
+}
