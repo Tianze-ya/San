@@ -3,7 +3,7 @@ import threading
 from flask import Flask, jsonify
 from flask_cors import CORS
 from waitress import serve
-from server import SanServer
+from san_server import SanServer
 from log import Logger
 
 HOST = "127.0.0.1"
