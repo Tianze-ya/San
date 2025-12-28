@@ -9,4 +9,23 @@ const createWindow = () => {
 	win.loadFile('index.html')
 }
 
-app.whenReady().then(createWindow)
+
+async function makeRequest() {
+	try {
+		const fetch = (await import('node-fetch')).default;
+		const response = await fetch('http://localhost:5000/process', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({ data: 'test' })
+		});
+		const data = await response.json();
+		console.log('Success:', data);
+	} catch (error) {
+		console.error('Error:', error);
+	}
+}
+
+makeRequest();
+//app.whenReady().then(createWindow)
