@@ -1,31 +1,33 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow } = require('electron');
+const {
+	ensureServerRunning,
+	api,
+	cleanupPythonProcess,
+} = require('./py_server');
 
 const createWindow = () => {
 	const win = new BrowserWindow({
 		width: 1000,
-		height: 800
-	})
-	win.menuBarVisible = false
-	win.loadFile('index.html')
-}
+		height: 800,
+	});
+	win.menuBarVisible = false;
+	win.loadFile('index.html');
+};
 
+// 应用关闭时清理Python进程
+app.on('before-quit', () => {
+	cleanupPythonProcess();
+});
 
-async function makeRequest() {
-	try {
-		const fetch = (await import('node-fetch')).default;
-		const response = await fetch('http://localhost:5000/process', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({ data: 'test' })
-		});
-		const data = await response.json();
-		console.log('Success:', data);
-	} catch (error) {
-		console.error('Error:', error);
+app.on('window-all-closed', () => {
+	if (process.platform !== 'darwin') {
+		app.quit();
 	}
-}
+});
 
-makeRequest();
-//app.whenReady().then(createWindow)
+app.whenReady().then(async () => {
+	// 启动时确保服务器运行
+	await ensureServerRunning();
+	createWindow();
+	api('active', '');
+});

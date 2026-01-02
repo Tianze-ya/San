@@ -1,5 +1,6 @@
 import asyncio
 import threading
+import sys
 from flask import Flask, jsonify
 from flask_cors import CORS
 from waitress import serve
@@ -16,11 +17,18 @@ san = SanServer()
 CORS(app)
 
 
-@app.route("/process", methods=["POST"])
-def process_data():
-    # 处理逻辑
-    san.broadcast_message("Hello, San!")
-    return jsonify({"result": "success"})
+@app.route("/active", methods=["POST"])
+def active():
+    # san.broadcast_message("Hello, San!")
+    logger.info("Active")
+    return jsonify({"result": "active"})
+
+
+@app.route("/exit", methods=["POST"])
+def exit():
+    logger.info("Active")
+    sys.exit()
+    return jsonify({"result": "exit"})
 
 
 def run_server():

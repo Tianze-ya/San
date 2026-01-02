@@ -4,16 +4,18 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "start": "nodemon --exec electron . --watch ./ --ext .js .html .css .vue"
+    "start": "chcp 65001 && electron .",
+    "dev": "chcp 65001 && nodemon --exec electron . --watch ./ --ext .js .html .css .vue"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "GPL",
   "type": "commonjs",
   "devDependencies": {
     "electron": "^39.2.7"
   },
   "dependencies": {
+    "iconv-lite": "^0.7.1",
     "node-fetch": "^3.3.2"
   }
 }
