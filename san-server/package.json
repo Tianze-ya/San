@@ -5,7 +5,8 @@
   "main": "main.js",
   "scripts": {
     "start": "chcp 65001 && electron .",
-    "dev": "chcp 65001 && nodemon --exec electron . --watch ./ --ext .js .html .css .vue"
+    "dev": "chcp 65001 && nodemon --exec electron . --watch ./ --ext .js .html .css .vue",
+    "run_server": "cd python && uv run flask_server.py"
   },
   "keywords": [],
   "author": "",
@@ -15,7 +16,6 @@
     "electron": "^39.2.7"
   },
   "dependencies": {
-    "iconv-lite": "^0.7.1",
     "node-fetch": "^3.3.2"
   }
 }

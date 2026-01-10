@@ -1,7 +1,8 @@
 import asyncio
 import threading
-import sys
-from flask import Flask, jsonify
+import os
+import signal
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from waitress import serve
 from san_server import SanServer
@@ -17,18 +18,28 @@ san = SanServer()
 CORS(app)
 
 
+@app.before_request
+def before_request():
+    # 记录请求信息
+    logger.info(f"Request: {request.method} {request.path}")
+    logger.info(f"IP: {request.remote_addr}")
+    logger.info(f"User-Agent: {request.headers.get('User-Agent')}")
+
+
 @app.route("/active", methods=["POST"])
 def active():
     # san.broadcast_message("Hello, San!")
-    logger.info("Active")
-    return jsonify({"result": "active"})
+    return todata("active")
 
 
 @app.route("/exit", methods=["POST"])
 def exit():
-    logger.info("Active")
-    sys.exit()
-    return jsonify({"result": "exit"})
+    os.kill(os.getpid(), signal.SIGINT)
+    return todata("exit")
+
+
+def todata(name: str = "", data: str = ""):
+    return jsonify({"name": name, "data": data})
 
 
 def run_server():
@@ -49,7 +60,6 @@ def run_san():
 
 
 if __name__ == "__main__":
-    logger.info("------------------------------------------------------------")
     san_thread = threading.Thread(target=run_san)
     san_thread.daemon = True
     san_thread.start()
@@ -57,4 +67,3 @@ if __name__ == "__main__":
     logger.info(f"Starting FlaskServer on {HOST}:{PORT}")
     run_server()
     logger.info("FlaskServer stopped")
-    logger.info("------------------------------------------------------------")

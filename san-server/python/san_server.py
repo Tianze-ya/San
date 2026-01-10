@@ -1,16 +1,20 @@
 import asyncio
+import json
+from asyncio import StreamReader, StreamWriter
+from message import Meessage
+from typing import Set
 from log import Logger
 
 logger = Logger(__file__)
 
 
 class SanServer:
-    def __init__(self, host="127.0.0.1", port=9412):
+    def __init__(self, host: str = "127.0.0.1", port: int = 9412) -> None:
         self.host = host
         self.port = port
-        self.clients = set()
+        self.clients: Set[StreamWriter] = set()
 
-    async def handle_client(self, reader, writer):
+    async def handle_client(self, reader: StreamReader, writer: StreamWriter) -> None:
         """处理客户端连接"""
         client_addr = writer.get_extra_info("peername")
         logger.info(f"New connection from {client_addr}")
@@ -24,8 +28,10 @@ class SanServer:
                     break
 
                 # 处理数据
-                message = data.decode().strip()
-                logger.info(f"Received from {client_addr}: {message}")
+                json_data: dict = json.loads(data.decode().strip())
+                message = Meessage(json_data, client_addr)
+                logger.info(message)
+                message.exec()
 
         except (asyncio.CancelledError, ConnectionError):
             pass
@@ -35,7 +41,7 @@ class SanServer:
             writer.close()
             await writer.wait_closed()
 
-    async def broadcast_message(self, message):
+    async def broadcast_message(self, message: str) -> None:
         """向所有客户端广播消息"""
         if not self.clients:
             logger.info("No clients connected")
@@ -50,7 +56,7 @@ class SanServer:
             except ConnectionError:
                 pass
 
-    async def get_user_input(self):
+    async def get_user_input(self) -> None:
         """获取用户输入"""
         loop = asyncio.get_event_loop()
         while True:
@@ -73,7 +79,7 @@ class SanServer:
 
             await self.broadcast_message(message)
 
-    async def run(self):
+    async def run(self) -> None:
         """启动服务器"""
         server = await asyncio.start_server(self.handle_client, self.host, self.port)
 
@@ -81,23 +87,25 @@ class SanServer:
         logger.info(f"Serving on {addr}")
 
         # 启动用户输入任务
-        input_task = asyncio.create_task(self.get_user_input())
+        # input_task = asyncio.create_task(self.get_user_input())
 
         try:
             async with server:
                 await server.serve_forever()
         except asyncio.CancelledError:
             pass
+        """
         finally:
             input_task.cancel()
             try:
                 await input_task
             except asyncio.CancelledError:
                 pass
+        """
 
 
 # 运行服务器
-async def main():
+async def main() -> None:
     server = SanServer()
     await server.run()
 

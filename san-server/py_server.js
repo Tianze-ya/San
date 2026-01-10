@@ -1,35 +1,11 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const net = require('net');
-const iconv = require('iconv-lite');
 
 // Python进程管理
 let pythonProcess = null;
 const PYTHON_SERVER_PORT = 5000;
 const PYTHON_SERVER_HOST = '127.0.0.1';
-
-function toOut(data) {
-	// 使用iconv-lite处理编码，解决Windows下中文乱码问题
-	let output;
-	try {
-		// 首先尝试UTF-8解码
-		output = data.toString('utf8');
-		// 检查是否包含乱码字符
-		if (output.includes('�')) {
-			// 如果有乱码，尝试GBK解码
-			output = iconv.decode(data, 'gbk');
-		}
-	} catch (e) {
-		// 如果UTF-8解码失败，直接使用GBK
-		try {
-			output = iconv.decode(data, 'gbk');
-		} catch (e2) {
-			// 最后的备选方案
-			output = data.toString('utf8');
-		}
-	}
-	return output;
-}
 
 // 检测服务器是否已运行
 async function isServerRunning() {
@@ -65,18 +41,14 @@ async function startPythonServer() {
 		});
 
 		pythonProcess.stdout.on('data', (data) => {
-			output = toOut(data);
-			console.log(`Python服务器输出: ${output}`);
+			console.log(`Python服务器输出: ${data}`);
 		});
 
 		pythonProcess.stderr.on('data', (data) => {
-			output = toOut(data);
-			console.error(`Python服务器错误: ${output}`);
+			console.error(`Python服务器错误: ${data}`);
 		});
 
 		pythonProcess.on('exit', (code, signal) => {
-			api('exit', '');
-			console.log(`Python服务器进程退出，代码: ${code}`);
 			pythonProcess = null;
 		});
 
@@ -112,11 +84,9 @@ async function ensureServerRunning() {
 
 // 清理Python进程
 function cleanupPythonProcess() {
-	if (pythonProcess) {
-		console.log('关闭Python服务器');
-		pythonProcess.kill();
-		pythonProcess = null;
-	}
+	api('exit', '');
+	console.log('关闭Python服务器');
+	pythonProcess = null;
 }
 
 async function api(api, body_data) {
