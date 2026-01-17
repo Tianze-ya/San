@@ -1,4 +1,5 @@
 const { spawn } = require('child_process');
+const fs = require('fs');
 const path = require('path');
 const net = require('net');
 
@@ -6,6 +7,17 @@ const net = require('net');
 let pythonProcess = null;
 const PYTHON_SERVER_PORT = 5000;
 const PYTHON_SERVER_HOST = '127.0.0.1';
+
+// 读取token
+function get_token() {
+	try {
+		const data = fs.readFileSync('python/token', 'utf8');
+		return data;
+	} catch (err) {
+		console.error('读取token出错:', err);
+		return '';
+	}
+}
 
 // 检测服务器是否已运行
 async function isServerRunning() {
@@ -83,29 +95,36 @@ async function ensureServerRunning() {
 }
 
 // 清理Python进程
-function cleanupPythonProcess() {
-	api('exit', '');
+async function cleanupPythonProcess() {
+	await post('exit', '');
 	console.log('关闭Python服务器');
 	pythonProcess = null;
 }
 
-async function api(api, body_data) {
+async function api(body_data) {
+	return await post('api', body_data);
+}
+
+async function post(url, body_data) {
 	try {
+		let Token = get_token();
 		const fetch = (await import('node-fetch')).default;
 		const response = await fetch(
-			`http://${PYTHON_SERVER_HOST}:${PYTHON_SERVER_PORT}/${api}`,
+			`http://${PYTHON_SERVER_HOST}:${PYTHON_SERVER_PORT}/${url}`,
 			{
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
+					token: Token,
 				},
 				body: JSON.stringify({ data: body_data }),
-			}
+			},
 		);
 		const data = await response.json();
 		console.log('Success:', data);
-	} catch (_error) {
-		console.error('API调用失败');
+		return data;
+	} catch (error) {
+		console.error('API调用失败: ' + error);
 	}
 }
 
@@ -114,6 +133,7 @@ module.exports = {
 	isServerRunning,
 	startPythonServer,
 	ensureServerRunning,
-	api,
 	cleanupPythonProcess,
+	api,
+	post,
 };

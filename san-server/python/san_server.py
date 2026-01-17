@@ -1,7 +1,7 @@
 import asyncio
 import json
 from asyncio import StreamReader, StreamWriter
-from message import Meessage
+from message import Message
 from typing import Set
 from log import Logger
 
@@ -13,12 +13,14 @@ class SanServer:
         self.host = host
         self.port = port
         self.clients: Set[StreamWriter] = set()
+        self.client_dict: dict = {}
 
     async def handle_client(self, reader: StreamReader, writer: StreamWriter) -> None:
         """处理客户端连接"""
         client_addr = writer.get_extra_info("peername")
         logger.info(f"New connection from {client_addr}")
         self.clients.add(writer)
+        self.client_dict[client_addr] = writer
 
         try:
             while True:
@@ -29,7 +31,7 @@ class SanServer:
 
                 # 处理数据
                 json_data: dict = json.loads(data.decode().strip())
-                message = Meessage(json_data, client_addr)
+                message = Message(json_data, client_addr)
                 logger.info(message)
                 message.exec()
 
@@ -55,6 +57,23 @@ class SanServer:
                 await client.drain()
             except ConnectionError:
                 pass
+
+    async def send_message(self, message: Message) -> None:
+        try:
+            client_addr = message.addr
+            client = self.client_dict[client_addr]
+            client.write(message.to_bytes())
+        except KeyError:
+            # 发送回错误消息
+            pass
+
+    async def get_all_addresses(self) -> list:
+        """获取所有客户端地址"""
+        logger.info("Getting all addresses")
+        addresses = []
+        for client in self.clients:
+            addresses.append(client.get_extra_info("peername"))
+        return addresses
 
     async def get_user_input(self) -> None:
         """获取用户输入"""
@@ -116,4 +135,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
     finally:
-        logger.info("Server stopped")
+        logger.info("SanServer stopped")

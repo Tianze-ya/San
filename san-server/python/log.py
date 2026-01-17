@@ -25,7 +25,7 @@ class Logger:
     def log(self, level: str, message: str):
         data = f"[{self.get_time()}] {level} [{self.name}] - {message}\n"
         print(data)
-        with  open(self.log_path, "a", encoding="utf-8") as f:
+        with open(self.log_path, "a", encoding="utf-8") as f:
             f.write(data)
 
     def get_date(self):
@@ -33,9 +33,6 @@ class Logger:
 
     def get_time(self):
         return datetime.datetime.now().strftime("%H:%M:%S")
-
-    def __del__(self):
-        self.log_file.close()
 
 
 if __name__ == "__main__":
