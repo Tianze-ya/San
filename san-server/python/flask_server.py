@@ -59,7 +59,7 @@ async def message():
             return todata("AllAddress", all_addr)
         case "photo":
             msg = make_msg("photo", addr=addr)
-            san.send_message(msg)
+            await san.send_message(msg)
             return todata("photo", "ok")
         case _:
             logger.error(f"未知Api: {name}")
@@ -77,27 +77,25 @@ def todata(name: str = "", data: str = ""):
     return jsonify({"name": name, "data": data})
 
 
-async def run_server():
-    await run_san()
+def run_server():
     serve(app, host=HOST, port=PORT)
 
 
-async def run_san():
-    await san.run()
+def run_san():
+    asyncio.run(san.run())
 
 
 if __name__ == "__main__":
-    """
     san_thread = threading.Thread(target=run_san)
     san_thread.daemon = True
     san_thread.start()
-    """
 
     logger.info(f"Starting FlaskServer on {HOST}:{PORT}")
     try:
-        asyncio.run(run_server())
+        run_server()
     except KeyboardInterrupt:
         pass
     finally:
         logger.info("SanServer stopped")
         logger.info("FlaskServer stopped")
+        asyncio.sleep(0.3)

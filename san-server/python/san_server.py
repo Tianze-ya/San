@@ -69,7 +69,6 @@ class SanServer:
 
     async def get_all_addresses(self) -> list:
         """获取所有客户端地址"""
-        logger.info("Getting all addresses")
         addresses = []
         for client in self.clients:
             addresses.append(client.get_extra_info("peername"))
@@ -123,15 +122,10 @@ class SanServer:
         """
 
 
-# 运行服务器
-async def main() -> None:
-    server = SanServer()
-    await server.run()
-
-
 if __name__ == "__main__":
     try:
-        asyncio.run(main())
+        server = SanServer()
+        asyncio.run(server.run())
     except KeyboardInterrupt:
         pass
     finally:
