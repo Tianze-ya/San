@@ -1,5 +1,6 @@
 import asyncio
 from asyncio import StreamReader, StreamWriter
+import pyautogui
 import json
 
 
@@ -24,6 +25,7 @@ class SanClient:
                 match name:
                     case "photo":
                         ...
+
                         # writer.write
                     case "exit":
                         asyncio.get_event_loop().stop()
