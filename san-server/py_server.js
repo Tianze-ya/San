@@ -1,12 +1,13 @@
-const { spawn } = require('child_process');
+const net = require('net');
 const fs = require('fs');
 const path = require('path');
-const net = require('net');
+const { spawn } = require('child_process');
 
 // Python进程管理
-let pythonProcess = null;
-const PYTHON_SERVER_PORT = 5000;
+let sanProcess = null;
+let client = null;
 const PYTHON_SERVER_HOST = '127.0.0.1';
+const PYTHON_SERVER_PORT = 9241;
 
 // 读取token
 function get_token() {
@@ -19,8 +20,28 @@ function get_token() {
 	}
 }
 
+async function connect() {
+	client = new net.Socket();
+	client.connect(PYTHON_SERVER_PORT, PYTHON_SERVER_HOST, () => {
+		console.log('Socket > Python');
+	});
+
+	client.on('data', (data) => {
+		console.log('收到数据:', data.toString('utf8'));
+		client.destroy();
+	});
+
+	client.on('error', (err) => {
+		console.error('Socket错误:', err);
+	});
+
+	client.on('close', () => {
+		console.log('Socket连接关闭');
+	});
+}
+
 // 检测服务器是否已运行
-async function isServerRunning() {
+async function isSanRunning() {
 	return new Promise((resolve) => {
 		const socket = new net.Socket();
 
@@ -42,98 +63,75 @@ async function isServerRunning() {
 }
 
 // 启动Python服务器
-async function startPythonServer() {
+async function startSan() {
 	return new Promise((resolve, reject) => {
-		console.log('正在启动Python服务器...');
+		console.log('正在启动San');
 
-		pythonProcess = spawn('uv run flask_server.py', {
+		sanProcess = spawn('uv run san_server.py', {
 			cwd: path.join(__dirname, 'python'),
 			stdio: ['pipe', 'pipe', 'pipe'],
 			shell: true,
 		});
 
-		pythonProcess.stdout.on('data', (data) => {
-			console.log(`Python服务器输出: ${data}`);
+		sanProcess.stdout.on('data', (data) => {
+			console.log(`San输出: ${data}`);
 		});
 
-		pythonProcess.stderr.on('data', (data) => {
-			console.error(`Python服务器错误: ${data}`);
+		sanProcess.stderr.on('data', (data) => {
+			console.error(`San错误: ${data}`);
 		});
 
-		pythonProcess.on('exit', (code, signal) => {
-			pythonProcess = null;
+		sanProcess.on('exit', (_code, _signal) => {
+			sanProcess = null;
 		});
 
-		pythonProcess.on('error', (error) => {
-			console.error('启动Python服务器失败:', error.message);
+		sanProcess.on('error', (error) => {
+			console.error('启动San失败:', error.message);
 			reject(error);
 		});
 
 		// 等待服务器启动
 		setTimeout(async () => {
-			const running = await isServerRunning();
+			const running = await isSanRunning();
 			if (running) {
-				console.log('Python服务器启动成功');
+				console.log('San启动成功');
 				resolve();
 			} else {
-				console.error('Python服务器启动失败');
-				reject(new Error('Python服务器启动失败'));
+				console.error('San启动失败');
+				reject(new Error('San启动失败'));
 			}
 		}, 3000);
 	});
 }
 
-// 确保服务器运行
-async function ensureServerRunning() {
-	const isRunning = await isServerRunning();
+// 确保服务器运行,如果未运行则启动,启动Socket链接
+async function ensureSanRunning() {
+	const isRunning = await isSanRunning();
 	if (!isRunning) {
-		console.log('Python服务器未运行，正在启动...');
-		await startPythonServer();
+		console.log('San未运行，正在启动...');
+		await startSan();
 	} else {
-		console.log('Python服务器已运行');
+		console.log('San已运行');
 	}
+	await connect();
 }
 
 // 清理Python进程
-async function cleanupPythonProcess() {
-	await post('exit', '');
-	console.log('关闭Python服务器');
-	pythonProcess = null;
+async function cleanSanProcess() {
+	//await post('exit', '');
+	console.log('关闭San');
+	sanProcess = null;
 }
 
-async function api(body_data) {
-	return await post('api', body_data);
-}
-
-async function post(url, body_data) {
-	try {
-		let Token = get_token();
-		const fetch = (await import('node-fetch')).default;
-		const response = await fetch(
-			`http://${PYTHON_SERVER_HOST}:${PYTHON_SERVER_PORT}/${url}`,
-			{
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					token: Token,
-				},
-				body: JSON.stringify({ data: body_data }),
-			},
-		);
-		const data = await response.json();
-		console.log('Success:', data);
-		return data;
-	} catch (error) {
-		console.error('API调用失败: ' + error);
-	}
+async function api(basemsg) {
+	client.write(basemsg);
 }
 
 // 导出函数供其他模块使用
 module.exports = {
-	isServerRunning,
-	startPythonServer,
-	ensureServerRunning,
-	cleanupPythonProcess,
+	isSanRunning,
+	startSan,
+	ensureSanRunning,
+	cleanSanProcess,
 	api,
-	post,
 };

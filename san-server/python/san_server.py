@@ -1,15 +1,22 @@
 import asyncio
 import json
+from tool import generate_token, get_msg
 from asyncio import StreamReader, StreamWriter
 from message import Message
 from typing import Set
 from log import Logger
 
+HOST = "127.0.0.1"
+PORT = 9241
+
+
 logger = Logger(__file__)
+token = generate_token()
+logger.info("token: " + token)
 
 
 class SanServer:
-    def __init__(self, host: str = "127.0.0.1", port: int = 9412) -> None:
+    def __init__(self, host: str, port: int) -> None:
         self.host = host
         self.port = port
         self.clients: Set[StreamWriter] = set()
@@ -31,15 +38,16 @@ class SanServer:
 
                 # 处理数据
                 json_data: dict = json.loads(data.decode().strip())
-                message = Message(json_data, client_addr)
+                message = get_msg(json_data, client_addr, self)
                 logger.info(message)
-                message.exec()
+                await message.exec()
 
         except (asyncio.CancelledError, ConnectionError):
             pass
         finally:
             logger.info(f"Connection closed: {client_addr}")
             self.clients.remove(writer)
+            self.client_dict.pop(client_addr)
             writer.close()
             await writer.wait_closed()
 
@@ -122,11 +130,15 @@ class SanServer:
         """
 
 
-if __name__ == "__main__":
+def main():
     try:
-        server = SanServer()
+        server = SanServer(HOST, PORT)
         asyncio.run(server.run())
     except KeyboardInterrupt:
         pass
     finally:
         logger.info("SanServer stopped")
+
+
+if __name__ == "__main__":
+    main()

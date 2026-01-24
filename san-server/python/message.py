@@ -1,4 +1,3 @@
-import hashlib
 from typing import TypedDict
 import json
 
@@ -6,22 +5,35 @@ import json
 class BaseMsg(TypedDict):
     """
     {
-        "name": "",
-        "msg": "",
-        "data": "",
+        "name": str,
+        "desc": str,
+        "token": str,
+        "data": bytes,
     }
     """
 
     name: str
-    msg: str
+    desc: str
+    token: str
     data: bytes
 
 
 class Message:
+    """
+    {
+        "name": str,
+        "desc": str,
+        "data": bytes,
+        "addr": str,
+        "message": BaseMsg
+    }
+    """
+
     def __init__(self, message: BaseMsg, addr: str = ""):
         self.message = message
         self.addr = addr
         self.name = message["name"]
+        self.desc = message["desc"]
         self.data = message["data"]
 
     def __str__(self):
@@ -30,21 +42,3 @@ class Message:
     def to_bytes(self) -> bytes:
         ojson = json.dumps(self.message)
         return ojson.encode("utf-8")
-
-    def exec(self) -> str:
-        match self.name:
-            case "message":
-                ...
-            case "photo":
-                hash = hashlib.sha256(self.data).hexdigest()
-                with open(f"photos/{hash}.jpg", "wb") as f:
-                    f.write(self.data)
-                return "ok"
-            case _:
-                ...
-
-
-def make_msg(
-    name: str = "", msg: str = "", data: bytes = b"", addr: str = ""
-) -> Message:
-    return Message({"name": name, "msg": msg, "data": data}, addr)

@@ -8,15 +8,6 @@ from flask_cors import CORS
 from waitress import serve
 from san_server import SanServer
 from log import Logger
-import secrets
-
-
-def generate_token(length=32):
-    token = secrets.token_hex(length)
-    path = os.path.join(os.path.dirname(__file__), "token")
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(token)
-    return token
 
 
 HOST = "127.0.0.1"
@@ -26,8 +17,8 @@ PORT = 5000
 logger = Logger(__file__)
 app = Flask(__name__)
 san = SanServer()
-token = generate_token()
-logger.info("token: " + token)
+
+
 CORS(app)
 
 
@@ -35,12 +26,6 @@ CORS(app)
 def before_request():
     # 记录请求信息
     logger.debug(f"Request: {request.method} {request.path} IP: {request.remote_addr}")
-
-    # 验证token
-    token_header = request.headers.get("token", type=str)
-
-    if token_header != token:
-        return todata("tokenError")
 
 
 @app.route("/active", methods=["POST"])
