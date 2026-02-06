@@ -1,14 +1,17 @@
 from message import BaseMsg, Message
-from san_server import SanServer
 import hashlib
-from tool import make_msg
+from tools import make_msg
 from log import Logger
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from san_server import SanServer
 
 logger = Logger(__file__)
 
 
 class ClientMessage:
-    def __init__(self, message: BaseMsg, addr: str = "", server: SanServer = None):
+    def __init__(self, message: BaseMsg, addr: str = "", server: "SanServer" = None):
         self.msg = Message(message, addr)
         self.server = server
 

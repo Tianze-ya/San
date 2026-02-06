@@ -1,6 +1,7 @@
 import asyncio
 import json
-from tool import generate_token, get_msg
+from tools import generate_token
+from tool import get_msg
 from asyncio import StreamReader, StreamWriter
 from message import Message
 from typing import Set

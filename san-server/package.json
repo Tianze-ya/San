@@ -2,17 +2,22 @@
   "name": "san-server",
   "version": "1.0.0",
   "description": "",
-  "main": "main.js",
+  "main": "dist/main.js",
   "scripts": {
-    "start": "chcp 65001 && electron .",
-    "dev": "chcp 65001 && nodemon --exec electron . --watch ./ --ext .js .html .css .vue",
-    "run_server": "cd python && uv run flask_server.py"
+    "build": "tsc",
+    "start": "tsc && chcp 65001 && electron .",
+    "dev": "chcp 65001 && tsc && nodemon --exec electron . --watch ./ --ext .js .html .css .vue .ts",
+    "run_server": "cd python && uv run san_server.py"
   },
   "keywords": [],
   "author": "",
   "license": "GPL",
   "type": "commonjs",
   "devDependencies": {
-    "electron": "^39.2.7"
+    "@types/electron": "^1.4.38",
+    "@types/node": "^25.0.10",
+    "@vue/runtime-dom": "^3.5.27",
+    "electron": "^39.2.7",
+    "typescript": "^5.9.3"
   }
 }
